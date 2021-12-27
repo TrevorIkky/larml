@@ -19,20 +19,6 @@ services:
       - mysql
       - flask
 
-  tf-serving:
-    image: tensorflow/serving
-    container_name: tensorflow-serving
-    ports:
-      - "8501:8501"
-      - "8500:8500"
-    environment:
-      MODEL_NAME: forest_classification,
-      MODEL_BASE_PATH: ~/models/
-    volumes:
-      ./app/models:~/models/
-    depends_on:
-      - php
-
   flask:
     build: 
       context: ./app
