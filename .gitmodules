@@ -1,0 +1,3 @@
+[submodule "app/neurallabs.web/src"]
+	path = app/neurallabs.web/src
+	url = https://github.com/ian-mungai/neurallabs-api.git

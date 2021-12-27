@@ -1,0 +1,93 @@
+version: "3"
+
+services:
+  nginx:
+    networks: 
+      - larmlapi
+    image: nginx:latest
+    container_name: nginx
+    restart: unless-stopped
+    tty: true
+    ports: 
+      - "8000:80"
+      - "443:443"
+    volumes: 
+      - ./app/web/src:/var/www/html
+      - ./app/web/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on: 
+      - php 
+      - mysql
+      - flask
+
+  tf-serving:
+    image: tensorflow/serving
+    container_name: tensorflow-serving
+    ports:
+      - "8501:8501"
+      - "8500:8500"
+    environment:
+      MODEL_NAME: forest_classification,
+      MODEL_BASE_PATH: ~/models/
+    volumes:
+      ./app/models:~/models/
+    depends_on:
+      - php
+
+  flask:
+    build: 
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: ml.flask
+    ports: 
+      - "5000:5000"
+    networks: 
+      - larmlapi
+
+  
+  php:
+    build:
+      context: ./app/web
+      dockerfile: Dockerfile
+      args:
+        user: ikky
+        uid: 1001
+    container_name: php
+    ports: 
+      - "9000:9000"
+    working_dir: /var/www/html
+    volumes: 
+      - ./app/web/src:/var/www/html
+      - ./app/web/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    environment: 
+      SERVICE_NAME: php-dev
+      SERVICE_TAGS: php
+    networks:
+      - larmlapi
+
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    ports: 
+      - "3306:3306"
+    restart: unless-stopped
+    tty: true
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: example_db
+      MYSQL_ROOT_PASSWORD:
+      SERVICE_TAGS: mysql-dev
+      SERVICE_NAME: mysql
+    volumes:
+      - ./app/web/mysql/my.cnf:/etc/mysql/my.cnf 
+      - ./app/web/mysql-data:/var/lib/mysql
+    networks: 
+      - larmlapi
+
+#Volumes - Volume accessible across all services
+volumes: 
+  mysql-data:
+    driver: local
+
+networks:
+  larmlapi:
+    driver: bridge
