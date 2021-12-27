@@ -29,7 +29,7 @@ services:
       MODEL_NAME: forest_classification
     volumes:
       - ./app/models/forest_classification:/models/forest_classification/1
-  
+
   app:
     build:
       context: ./app/web
