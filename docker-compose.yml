@@ -3,7 +3,7 @@ version: "3"
 services:
   nginx:
     networks: 
-      - larmlapi
+      - larml-network
     image: nginx:latest
     container_name: nginx
     restart: unless-stopped
@@ -17,40 +17,27 @@ services:
     depends_on: 
       - php 
       - mysql
-      - flask
 
   tf-serving:
     image: tensorflow/serving
+    tty: true
     container_name: tensorflow-serving
     ports:
       - "8501:8501"
       - "8500:8500"
     environment:
-      MODEL_NAME: forest_classification,
-      MODEL_BASE_PATH: ~/models/
+      MODEL_NAME: forest_classification
     volumes:
-      ./app/models:~/models/
-    depends_on:
-      - php
-
-  flask:
-    build: 
-      context: ./app
-      dockerfile: Dockerfile
-    container_name: ml.flask
-    ports: 
-      - "5000:5000"
-    networks: 
-      - larmlapi
-
+      - ./app/models/forest_classification:/models/forest_classification/1
   
-  php:
+  app:
     build:
       context: ./app/web
       dockerfile: Dockerfile
       args:
         user: ikky
-        uid: 1001
+        uid: 1000
+    tty: true
     container_name: php
     ports: 
       - "9000:9000"
@@ -59,10 +46,10 @@ services:
       - ./app/web/src:/var/www/html
       - ./app/web/php/local.ini:/usr/local/etc/php/conf.d/local.ini
     environment: 
-      SERVICE_NAME: php-dev
+      SERVICE_NAME: app
       SERVICE_TAGS: php
     networks:
-      - larmlapi
+      - larml-network
 
   mysql:
     image: mysql:latest
@@ -81,7 +68,7 @@ services:
       - ./app/web/mysql/my.cnf:/etc/mysql/my.cnf 
       - ./app/web/mysql-data:/var/lib/mysql
     networks: 
-      - larmlapi
+      - larml-network
 
 #Volumes - Volume accessible across all services
 volumes: 
@@ -89,5 +76,5 @@ volumes:
     driver: local
 
 networks:
-  larmlapi:
+  larml-network:
     driver: bridge
